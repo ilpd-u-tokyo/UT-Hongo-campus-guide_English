@@ -569,80 +569,131 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
+<!-- CSS部分（ピンのデザインを画像イラストに合わせる設定） -->
+<style>
+  /* 共通ピンの基本スタイル */
+  .custom-map-pin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pin-base {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #2F7DBF; /* 青色ピン */
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  /* アイコンピン用 */
+  .pin-icon {
+    font-size: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  /* スタート（赤色の大きなマーカー風） */
+  .pin-start {
+    background-color: #D9383A;
+    font-size: 12px;
+  }
+  /* ゴール（緑色） */
+  .pin-finish {
+    background-color: #0E6938;
+    border-radius: 4px;
+    width: auto;
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+</style>
+
+<!-- Leaflet JS (ライブラリ) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script>
-  // 1. マップの初期化（東京大学 本郷キャンパスの中心位置）
+  // 1. マップの初期化（画像と同じキャンパス全体が入る縮尺）
   var map = L.map('real-map', {
     zoomControl: true
-  }).setView([35.7122, 139.7618], 17);
+  }).setView([35.7123, 139.7618], 17);
 
-  // 2. 地図タイルの読み込み (OpenStreetMap)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // 2. 背景タイル（英語表記ベース）
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors'
+    subdomains: 'abcd',
+    attribution: '&copy; OpenStreetMap &copy; CARTO'
   }).addTo(map);
 
-  // 3. ルート線（赤い点線）の座標リスト
-  // ⑥福武ホールから⑦赤門前を通り、本郷通り沿いのバス乗車場所（FINISH）へ向かうルートに修正
-  var routePath = [
+  // 3. 画像の「ピンク色のルートライン」を忠実にたどる緯度経度
+  var routeCoordinates = [
     [35.71212, 139.76365], // ① START (山上会館)
-    [35.71260, 139.76315], // 三四郎池 東側通路
-    [35.71310, 139.76300], // 三四郎池 北側
+    [35.71260, 139.76315], // 三四郎池 東側
+    [35.71310, 139.76300], // 三四郎池 北側へ折れる
     [35.71355, 139.76280], // ③ 安田講堂前
-    [35.71360, 139.76180], // ④ 法文1号館・2号館通路（アーチ通過）
-    [35.71280, 139.76135], // ④から⑤へ南下する通路
-    [35.71180, 139.76075], // ⑤ 総合図書館北側
+    [35.71360, 139.76180], // ④ 法文1号館・2号館の間（アーチ）
+    [35.71280, 139.76135], // 矢印の方向（南へ向かう通路）
+    [35.71180, 139.76075], // ⑤ 総合図書館北側の通り
     [35.71100, 139.76010], // ⑥ 福武ホール前
-    [35.70950, 139.76010], // ⑦ 赤門前通路
-    [35.70930, 139.75970]  // 【修正】FINISH (赤門前・本郷通り沿いの大型バス停車位置)
+    [35.70950, 139.76010], // ⑦ 赤門前
+    [35.70960, 139.76210], // ⑦から東へ向かう通路（医学部前）
+    [35.71130, 139.76200]  // FINISH (総合図書館前のバス停車位置)
   ];
 
-  // 赤い点線ルートの描画
-  L.polyline(routePath, {
-    color: '#8B4A3E',
-    weight: 4,
-    opacity: 0.85,
-    dashArray: '6, 6'
+  // 画像と同じピンク/赤系のルート線を描画
+  L.polyline(routeCoordinates, {
+    color: '#E85B6F', // 画像のルート線に近いピンク赤
+    weight: 6,
+    opacity: 0.8
   }).addTo(map);
 
-  // 4. マーカーデータ（バス位置を赤門前公道沿いに変更）
+  // 4. 画像上の全スポットデータ
   var spots = [
-    // スポット①〜⑦
-    { id: "1", name: "1. Sanjo Conference Hall (山上会館)", lat: 35.71212, lng: 139.76365, type: "stop" },
-    { id: "2", name: "2. Sanshiro Pond (三四郎池)", lat: 35.71260, lng: 139.76280, type: "stop" },
-    { id: "3", name: "3. Yasuda Auditorium (安田講堂)", lat: 35.71355, lng: 139.76280, type: "stop" },
-    { id: "4", name: "4. Law and Letters Building (法文1・2号館)", lat: 35.71340, lng: 139.76160, type: "stop" },
-    { id: "5", name: "5. General Library North (総合図書館北)", lat: 35.71180, lng: 139.76075, type: "stop" },
-    { id: "6", name: "6. Fukutake Hall (福武ホール)", lat: 35.71100, lng: 139.76010, type: "stop" },
-    { id: "7", name: "7. Akamon Area (赤門前)", lat: 35.70950, lng: 139.76010, type: "stop" },
+    { num: "1", name: "① Sanjo Conference Hall (START)", lat: 35.71212, lng: 139.76365, isStart: true },
+    { num: "2", name: "② Sanshiro Pond", lat: 35.71260, lng: 139.76280 },
+    { num: "3", name: "③ Yasuda Auditorium", lat: 35.71355, lng: 139.76280 },
+    { num: "4", name: "④ Law and Letters Building (Building 1 & 2)", lat: 35.71340, lng: 139.76160 },
+    { num: "5", name: "⑤ General Library Pass", lat: 35.71180, lng: 139.76075 },
+    { num: "6", name: "⑥ Fukutake Hall", lat: 35.71100, lng: 139.76010 },
+    { num: "7", name: "⑦ Akamon Area", lat: 35.70950, lng: 139.76010 },
     
-    // お土産ショップ (2箇所)
-    { id: "🛍️", name: "Souvenir Shop 1 (安田講堂購買部)", lat: 35.71330, lng: 139.76270, type: "shop" },
-    { id: "🛍️", name: "Souvenir Shop 2 (コミュニケーションセンター)", lat: 35.71040, lng: 139.76020, type: "shop" },
-    
-    // 【修正】大型バス停車可能な集合場所（赤門前の本郷通り沿い）
-    { id: "🚌", name: "FINISH / Bus Pickup Point (バス乗車場所)", lat: 35.70930, lng: 139.75970, type: "finish" },
-    
-    // 施設案内アイコン（喫煙所・トイレ）
-    { id: "🚬", name: "Smoking Area (喫煙所)", lat: 35.71250, lng: 139.76150, type: "facility" },
-    { id: "🚻", name: "Restroom (トイレ)", lat: 35.70980, lng: 139.76040, type: "facility" },
-
-    // 最寄り駅
-    { id: "M", name: "Todai-mae Sta. (東大前駅)", lat: 35.71760, lng: 139.75830, type: "station" },
-    { id: "M", name: "Hongo-sanchome Sta. (本郷三丁目駅)", lat: 35.70670, lng: 139.75990, type: "station" }
+    // アイコン類
+    { num: "🛍️", name: "Souvenir Shop (安田講堂)", lat: 35.71330, lng: 139.76270, isIcon: true },
+    { num: "🛍️", name: "Souvenir Shop (福武ホール)", lat: 35.71040, lng: 139.76020, isIcon: true },
+    { num: "🚬", name: "Smoking Area", lat: 35.71250, lng: 139.76150, isIcon: true },
+    { num: "🚻", name: "Restroom", lat: 35.70980, lng: 139.76040, isIcon: true },
+    { num: "🚌 FINISH", name: "FINISH / Bus Pickup", lat: 35.71130, lng: 139.76200, isFinish: true }
   ];
 
-  // 5. アイコンの生成とマップ追加
+  // 5. 各ピンをマップ上に生成
   spots.forEach(function(spot) {
-    var cssClass = "divnum";
-    if (spot.type === "shop") cssClass += " shop";
-    if (spot.type === "finish") cssClass += " finish";
-    if (spot.type === "station") cssClass += " station";
+    var htmlContent = '';
+    
+    if (spot.isFinish) {
+      htmlContent = '<div class="pin-base pin-finish">' + spot.num + '</div>';
+    } else if (spot.isStart) {
+      htmlContent = '<div class="pin-base pin-start">1</div>';
+    } else if (spot.isIcon) {
+      htmlContent = '<div class="pin-icon">' + spot.num + '</div>';
+    } else {
+      htmlContent = '<div class="pin-base">' + spot.num + '</div>';
+    }
 
     var customIcon = L.divIcon({
       className: 'custom-map-pin',
-      html: '<div class="' + cssClass + '">' + spot.id + '</div>',
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      html: htmlContent,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
     });
 
     L.marker([spot.lat, spot.lng], { icon: customIcon })
@@ -650,24 +701,14 @@
       .addTo(map);
   });
 
-  // 6. 現在地表示ボタンの機能 (GPS)
+  // 6. 現在地表示機能
   function locateMe() {
     map.locate({ setView: true, maxZoom: 17 });
   }
 
   map.on('locationfound', function(e) {
-    L.circle(e.latlng, e.accuracy, {
-      color: '#152A47',
-      fillColor: '#C89B3C',
-      fillOpacity: 0.4
-    }).addTo(map);
-
-    L.marker(e.latlng).addTo(map)
-      .bindPopup("<b>あなたの現在地</b>").openPopup();
-  });
-
-  map.on('locationerror', function(e) {
-    alert("位置情報が取得できませんでした。端末の位置情報設定をご確認ください。");
+    L.circle(e.latlng, e.accuracy, { color: '#2F7DBF', opacity: 0.5 }).addTo(map);
+    L.marker(e.latlng).addTo(map).bindPopup("<b>あなたの現在地</b>").openPopup();
   });
 </script>
 
