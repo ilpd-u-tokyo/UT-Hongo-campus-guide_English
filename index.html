@@ -567,7 +567,58 @@
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js">
+
+<script>
+ <style>
+  /* 建物名ラベル（文字表示）のスタイル */
+  .building-label {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #777;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #222;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    white-space: nowrap;
+  }
+
+  /* ピンのスタイル */
+  .pin-base {
+    background: #2F7DBF;
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .pin-start { background: #D9383A; }
+  .pin-finish {
+    background: #0E6938;
+    width: auto;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+  .pin-icon-bg {
+    background: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+</style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
@@ -577,64 +628,85 @@
     zoomControl: true
   }).setView([35.7122, 139.7618], 17);
 
-  // 2. 英語表記の背景地図タイル
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  // 2. 背景地図タイル（日本語表記・建物形が一番わかりやすい標準OSM）
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    subdomains: 'abcd',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // 3. ルート（赤い点線）
+  // 3. 画像通りのルート（ピンク色の実線）
   var routeCoordinates = [
-    [35.71212, 139.76365], // ① START (Sanjo Conference Hall)
-    [35.71260, 139.76315], // Sanshiro Pond (East)
-    [35.71310, 139.76300], // Sanshiro Pond (North)
-    [35.71355, 139.76280], // ③ Yasuda Auditorium
-    [35.71360, 139.76180], // ④ Law and Letters Bldg. Pass
-    [35.71280, 139.76135], // Path to South
-    [35.71180, 139.76075], // ⑤ General Library
-    [35.71100, 139.76010], // ⑥ Fukutake Hall
-    [35.70950, 139.76010], // ⑦ Akamon Area
-    [35.70960, 139.76210], // Faculty of Medicine
-    [35.71130, 139.76200]  // FINISH (Bus Stop)
+    [35.71212, 139.76365], // ① START (山上会館)
+    [35.71260, 139.76315], // 三四郎池 東側
+    [35.71310, 139.76300], // 三四郎池 北側
+    [35.71355, 139.76280], // ③ 安田講堂
+    [35.71360, 139.76180], // ④ 法文1号館・2号館通路（アーチ通過）
+    [35.71280, 139.76135], // 矢印の方向（南へ下る）
+    [35.71180, 139.76075], // ⑤ 総合図書館北
+    [35.71100, 139.76010], // ⑥ 福武ホール前
+    [35.70950, 139.76010], // ⑦ 赤門前
+    [35.70960, 139.76210], // 医学部前
+    [35.71130, 139.76200]  // FINISH (バス停車位置)
   ];
 
   L.polyline(routeCoordinates, {
-    color: '#D9383A',
-    weight: 5,
-    opacity: 0.85,
-    dashArray: '6, 6'
+    color: '#E85B6F', // 画像のピンクライン
+    weight: 6,
+    opacity: 0.85
   }).addTo(map);
 
-  // 4. スポットデータ（全テキスト英語化）
-  var spots = [
-    { num: "1", name: "1. Sanjo Conference Hall (START)", lat: 35.71212, lng: 139.76365, isStart: true },
-    { num: "2", name: "2. Sanshiro Pond", lat: 35.71260, lng: 139.76280 },
-    { num: "3", name: "3. Yasuda Auditorium", lat: 35.71355, lng: 139.76280 },
-    { num: "4", name: "4. Law and Letters Building 1 & 2", lat: 35.71340, lng: 139.76160 },
-    { num: "5", name: "5. General Library North Pass", lat: 35.71180, lng: 139.76075 },
-    { num: "6", name: "6. Fukutake Hall", lat: 35.71100, lng: 139.76010 },
-    { num: "7", name: "7. Akamon Area", lat: 35.70950, lng: 139.76010 },
-    
-    { num: "🛍️", name: "Souvenir Shop (Yasuda Auditorium)", lat: 35.71330, lng: 139.76270, isIcon: true },
-    { num: "🛍️", name: "Souvenir Shop (Fukutake Hall)", lat: 35.71040, lng: 139.76020, isIcon: true },
-    { num: "🚬", name: "Smoking Area", lat: 35.71250, lng: 139.76150, isIcon: true },
-    { num: "🚻", name: "Restroom", lat: 35.70980, lng: 139.76040, isIcon: true },
-    { num: "🚌 FINISH", name: "FINISH / Bus Pickup Point", lat: 35.71130, lng: 139.76200, isFinish: true }
+  // 4. 画像の建物名ラベル（日英併記で地図上に常時表示）
+  var buildingLabels = [
+    { text: "Sanjo Conference Hall<br>山上会館", lat: 35.7119, lng: 139.7637 },
+    { text: "Sanshiro Pond<br>三四郎池", lat: 35.7124, lng: 139.7624 },
+    { text: "Yasuda Auditorium<br>安田講堂", lat: 35.7138, lng: 139.7628 },
+    { text: "Building 1 / Law and Letters<br>法文1号館", lat: 35.7138, lng: 139.7613 },
+    { text: "Building 2<br>法文2号館", lat: 35.7131, lng: 139.7613 },
+    { text: "Building 3<br>工学部3号館", lat: 35.7128, lng: 139.7602 },
+    { text: "General Library<br>総合図書館", lat: 35.7114, lng: 139.7610 },
+    { text: "Fukutake Hall<br>福武ホール", lat: 35.7112, lng: 139.7597 },
+    { text: "Faculty of Medicine<br>医学部", lat: 35.7095, lng: 139.7625 },
+    { text: "Faculty of Economics<br>経済学部", lat: 35.7086, lng: 139.7610 }
   ];
 
-  // 5. ピンの描画
+  buildingLabels.forEach(function(b) {
+    L.tooltip({
+      permanent: true,
+      direction: 'center',
+      className: 'building-label'
+    })
+    .setContent(b.text)
+    .setLatLng([b.lat, b.lng])
+    .addTo(map);
+  });
+
+  // 5. 画像と同じスポットピン①〜⑦・アイコン
+  var spots = [
+    { num: "1", name: "1. Sanjo Conference Hall / 山上会館 (START)", lat: 35.71212, lng: 139.76365, isStart: true },
+    { num: "2", name: "2. Sanshiro Pond / 三四郎池", lat: 35.71260, lng: 139.76280 },
+    { num: "3", name: "3. Yasuda Auditorium / 安田講堂", lat: 35.71355, lng: 139.76280 },
+    { num: "4", name: "4. Law and Letters / 法文1・2号館", lat: 35.71340, lng: 139.76160 },
+    { num: "5", name: "5. General Library North / 総合図書館北", lat: 35.71180, lng: 139.76075 },
+    { num: "6", name: "6. Fukutake Hall / 福武ホール", lat: 35.71100, lng: 139.76010 },
+    { num: "7", name: "7. Akamon Area / 赤門周辺", lat: 35.70950, lng: 139.76010 },
+    
+    { num: "🛍️", name: "Souvenir Shop / 購買部 (安田講堂)", lat: 35.71330, lng: 139.76270, isIcon: true },
+    { num: "🛍️", name: "Souvenir Shop / ショップ (福武ホール)", lat: 35.71040, lng: 139.76020, isIcon: true },
+    { num: "🚬", name: "Smoking Area / 喫煙所", lat: 35.71250, lng: 139.76150, isIcon: true },
+    { num: "🚻", name: "Restroom / トイレ", lat: 35.70980, lng: 139.76040, isIcon: true },
+    { num: "🚌 FINISH", name: "FINISH / Bus Pickup Point (バス乗降場)", lat: 35.71130, lng: 139.76200, isFinish: true }
+  ];
+
   spots.forEach(function(spot) {
     var htmlContent = '';
-    
     if (spot.isFinish) {
-      htmlContent = '<div style="background:#0E6938;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:bold;">' + spot.num + '</div>';
+      htmlContent = '<div class="pin-finish">' + spot.num + '</div>';
     } else if (spot.isStart) {
-      htmlContent = '<div style="background:#D9383A;color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid #fff;">1</div>';
+      htmlContent = '<div class="pin-base pin-start">1</div>';
     } else if (spot.isIcon) {
-      htmlContent = '<div style="background:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;font-size:16px;">' + spot.num + '</div>';
+      htmlContent = '<div class="pin-icon-bg">' + spot.num + '</div>';
     } else {
-      htmlContent = '<div style="background:#2F7DBF;color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid #fff;">' + spot.num + '</div>';
+      htmlContent = '<div class="pin-base">' + spot.num + '</div>';
     }
 
     var customIcon = L.divIcon({
@@ -674,11 +746,11 @@
         iconSize: [22, 22],
         iconAnchor: [11, 11]
       })
-    }).addTo(map).bindPopup("<b>📍 Your Location</b>").openPopup();
+    }).addTo(map).bindPopup("<b>📍 現在地 / Your Location</b>").openPopup();
   });
 
   map.on('locationerror', function(e) {
-    alert("Could not get location. Please enable GPS.");
+    alert("位置情報を取得できませんでした。GPS設定をご確認ください。");
   });
 </script>
 
