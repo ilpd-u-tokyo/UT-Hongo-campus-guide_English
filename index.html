@@ -761,7 +761,6 @@ function playNextInQueue(){
 
 </body>
 </html>
-<!-- Leaflet JS (必須ライブラリ) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
@@ -776,7 +775,8 @@ function playNextInQueue(){
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // 3. 画像マップに完全に沿ったルート線（赤い点線）の座標リスト
+  // 3. ルート線（赤い点線）の座標リスト
+  // ⑥福武ホールから⑦赤門前を通り、本郷通り沿いのバス乗車場所（FINISH）へ向かうルートに修正
   var routePath = [
     [35.71212, 139.76365], // ① START (山上会館)
     [35.71260, 139.76315], // 三四郎池 東側通路
@@ -786,9 +786,8 @@ function playNextInQueue(){
     [35.71280, 139.76135], // ④から⑤へ南下する通路
     [35.71180, 139.76075], // ⑤ 総合図書館北側
     [35.71100, 139.76010], // ⑥ 福武ホール前
-    [35.70930, 139.76060], // ⑦ 赤門前
-    [35.70960, 139.76230], // ⑦から東へ進む通路（医学部前）
-    [35.71130, 139.76200]  // FINISH (総合図書館前 バス乗り場)
+    [35.70950, 139.76010], // ⑦ 赤門前通路
+    [35.70930, 139.75970]  // 【修正】FINISH (赤門前・本郷通り沿いの大型バス停車位置)
   ];
 
   // 赤い点線ルートの描画
@@ -799,7 +798,7 @@ function playNextInQueue(){
     dashArray: '6, 6'
   }).addTo(map);
 
-  // 4. マーカーデータ（画像マップに存在する全ピン）
+  // 4. マーカーデータ（バス位置を赤門前公道沿いに変更）
   var spots = [
     // スポット①〜⑦
     { id: "1", name: "1. Sanjo Conference Hall (山上会館)", lat: 35.71212, lng: 139.76365, type: "stop" },
@@ -808,14 +807,14 @@ function playNextInQueue(){
     { id: "4", name: "4. Law and Letters Building (法文1・2号館)", lat: 35.71340, lng: 139.76160, type: "stop" },
     { id: "5", name: "5. General Library North (総合図書館北)", lat: 35.71180, lng: 139.76075, type: "stop" },
     { id: "6", name: "6. Fukutake Hall (福武ホール)", lat: 35.71100, lng: 139.76010, type: "stop" },
-    { id: "7", name: "7. Akamon Area (赤門前)", lat: 35.70930, lng: 139.76060, type: "stop" },
+    { id: "7", name: "7. Akamon Area (赤門前)", lat: 35.70950, lng: 139.76010, type: "stop" },
     
     // お土産ショップ (2箇所)
     { id: "🛍️", name: "Souvenir Shop 1 (安田講堂購買部)", lat: 35.71330, lng: 139.76270, type: "shop" },
     { id: "🛍️", name: "Souvenir Shop 2 (コミュニケーションセンター)", lat: 35.71040, lng: 139.76020, type: "shop" },
     
-    // ゴール（バス）
-    { id: "🚌", name: "FINISH / Bus Pickup Point (集合場所)", lat: 35.71130, lng: 139.76200, type: "finish" },
+    // 【修正】大型バス停車可能な集合場所（赤門前の本郷通り沿い）
+    { id: "🚌", name: "FINISH / Bus Pickup Point (バス乗車場所)", lat: 35.70930, lng: 139.75970, type: "finish" },
     
     // 施設案内アイコン（喫煙所・トイレ）
     { id: "🚬", name: "Smoking Area (喫煙所)", lat: 35.71250, lng: 139.76150, type: "facility" },
