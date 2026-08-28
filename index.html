@@ -761,3 +761,107 @@ function playNextInQueue(){
 
 </body>
 </html>
+<!-- Leaflet JS (必須ライブラリ) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+  // 1. マップの初期化（東京大学 本郷キャンパスの中心位置）
+  var map = L.map('real-map', {
+    zoomControl: true
+  }).setView([35.7122, 139.7618], 17);
+
+  // 2. 地図タイルの読み込み (OpenStreetMap)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // 3. 画像マップに完全に沿ったルート線（赤い点線）の座標リスト
+  var routePath = [
+    [35.71212, 139.76365], // ① START (山上会館)
+    [35.71260, 139.76315], // 三四郎池 東側通路
+    [35.71310, 139.76300], // 三四郎池 北側
+    [35.71355, 139.76280], // ③ 安田講堂前
+    [35.71360, 139.76180], // ④ 法文1号館・2号館通路（アーチ通過）
+    [35.71280, 139.76135], // ④から⑤へ南下する通路
+    [35.71180, 139.76075], // ⑤ 総合図書館北側
+    [35.71100, 139.76010], // ⑥ 福武ホール前
+    [35.70930, 139.76060], // ⑦ 赤門前
+    [35.70960, 139.76230], // ⑦から東へ進む通路（医学部前）
+    [35.71130, 139.76200]  // FINISH (総合図書館前 バス乗り場)
+  ];
+
+  // 赤い点線ルートの描画
+  L.polyline(routePath, {
+    color: '#8B4A3E',
+    weight: 4,
+    opacity: 0.85,
+    dashArray: '6, 6'
+  }).addTo(map);
+
+  // 4. マーカーデータ（画像マップに存在する全ピン）
+  var spots = [
+    // スポット①〜⑦
+    { id: "1", name: "1. Sanjo Conference Hall (山上会館)", lat: 35.71212, lng: 139.76365, type: "stop" },
+    { id: "2", name: "2. Sanshiro Pond (三四郎池)", lat: 35.71260, lng: 139.76280, type: "stop" },
+    { id: "3", name: "3. Yasuda Auditorium (安田講堂)", lat: 35.71355, lng: 139.76280, type: "stop" },
+    { id: "4", name: "4. Law and Letters Building (法文1・2号館)", lat: 35.71340, lng: 139.76160, type: "stop" },
+    { id: "5", name: "5. General Library North (総合図書館北)", lat: 35.71180, lng: 139.76075, type: "stop" },
+    { id: "6", name: "6. Fukutake Hall (福武ホール)", lat: 35.71100, lng: 139.76010, type: "stop" },
+    { id: "7", name: "7. Akamon Area (赤門前)", lat: 35.70930, lng: 139.76060, type: "stop" },
+    
+    // お土産ショップ (2箇所)
+    { id: "🛍️", name: "Souvenir Shop 1 (安田講堂購買部)", lat: 35.71330, lng: 139.76270, type: "shop" },
+    { id: "🛍️", name: "Souvenir Shop 2 (コミュニケーションセンター)", lat: 35.71040, lng: 139.76020, type: "shop" },
+    
+    // ゴール（バス）
+    { id: "🚌", name: "FINISH / Bus Pickup Point (集合場所)", lat: 35.71130, lng: 139.76200, type: "finish" },
+    
+    // 施設案内アイコン（喫煙所・トイレ）
+    { id: "🚬", name: "Smoking Area (喫煙所)", lat: 35.71250, lng: 139.76150, type: "facility" },
+    { id: "🚻", name: "Restroom (トイレ)", lat: 35.70980, lng: 139.76040, type: "facility" },
+
+    // 最寄り駅
+    { id: "M", name: "Todai-mae Sta. (東大前駅)", lat: 35.71760, lng: 139.75830, type: "station" },
+    { id: "M", name: "Hongo-sanchome Sta. (本郷三丁目駅)", lat: 35.70670, lng: 139.75990, type: "station" }
+  ];
+
+  // 5. アイコンの生成とマップ追加
+  spots.forEach(function(spot) {
+    var cssClass = "divnum";
+    if (spot.type === "shop") cssClass += " shop";
+    if (spot.type === "finish") cssClass += " finish";
+    if (spot.type === "station") cssClass += " station";
+
+    var customIcon = L.divIcon({
+      className: 'custom-map-pin',
+      html: '<div class="' + cssClass + '">' + spot.id + '</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    L.marker([spot.lat, spot.lng], { icon: customIcon })
+      .bindPopup('<b>' + spot.name + '</b>')
+      .addTo(map);
+  });
+
+  // 6. 現在地表示ボタンの機能 (GPS)
+  function locateMe() {
+    map.locate({ setView: true, maxZoom: 17 });
+  }
+
+  map.on('locationfound', function(e) {
+    L.circle(e.latlng, e.accuracy, {
+      color: '#152A47',
+      fillColor: '#C89B3C',
+      fillOpacity: 0.4
+    }).addTo(map);
+
+    L.marker(e.latlng).addTo(map)
+      .bindPopup("<b>あなたの現在地</b>").openPopup();
+  });
+
+  map.on('locationerror', function(e) {
+    alert("位置情報が取得できませんでした。端末の位置情報設定をご確認ください。");
+  });
+</script>
