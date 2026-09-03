@@ -483,11 +483,31 @@ function resetButton(btn){
   btn.querySelector('span').textContent = 'listen';
 }
 
+/* ★音声選択ロジックを追加した speakStop 関数★ */
 function speakStop(stopEl, btn, onEndCb){
   const text = stopEl.getAttribute('data-audio');
   const utter = new SpeechSynthesisUtterance(text);
   utter.lang = 'en-US';
   utter.rate = 0.95;
+
+  // --- 高品質な英語音声を選択する処理 ---
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(v => 
+    v.lang.startsWith('en') && (
+      v.name.includes('Google') || 
+      v.name.includes('Natural') || 
+      v.name.includes('Samantha') || 
+      v.name.includes('Daniel') ||
+      v.name.includes('Karen') ||
+      v.name.includes('Rishi')
+    )
+  ) || voices.find(v => v.lang.startsWith('en'));
+
+  if (preferredVoice) {
+    utter.voice = preferredVoice;
+  }
+  // ----------------------------------
+
   utter.onend = function(){
     resetButton(btn);
     if(currentStopEl === stopEl) clearActive();
@@ -495,72 +515,75 @@ function speakStop(stopEl, btn, onEndCb){
   };
   utter.onerror = function(){
     resetButton(btn);
-    if(onEndCb) onEndCb();
+    if(currentStopEl === stopEl) clearActive();
   };
+
   currentUtterance = utter;
   currentBtn = btn;
   currentStopEl = stopEl;
+
+  btn.classList.add('speaking');
+  btn.querySelector('span').textContent = 'stop';
   setActiveStop(stopEl);
-  if(btn){
-    btn.classList.add('speaking');
-    btn.querySelector('span').textContent = 'stop';
-  }
+
   window.speechSynthesis.speak(utter);
+}
+
+function stopCurrent(){
+  if(window.speechSynthesis.speaking || window.speechSynthesis.pending){
+    window.speechSynthesis.cancel();
+  }
+  if(currentBtn) resetButton(currentBtn);
+  clearActive();
+  isPlayingAll = false;
+  const playAllBtn = document.getElementById('play-all-label');
+  if(playAllBtn) playAllBtn.textContent = '▶ play the full audio guide';
 }
 
 function toggleSpeak(btn){
   const stopEl = btn.closest('.stop, .shopbreak');
-  if(window.speechSynthesis.speaking && currentBtn === btn){
-    window.speechSynthesis.cancel();
-    resetButton(btn);
-    clearActive();
-    return;
+  if(currentBtn === btn && window.speechSynthesis.speaking){
+    stopCurrent();
+  } else {
+    stopCurrent();
+    speakStop(stopEl, btn);
   }
-  window.speechSynthesis.cancel();
-  stopPlayAll();
-  speakStop(stopEl, btn);
-}
-
-function scrollToStop(id){
-  const el = document.getElementById(id);
-  if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
-  setActiveStop(el);
-}
-
-function stopPlayAll(){
-  isPlayingAll = false;
-  document.getElementById('play-all-label').textContent = '▶ play the full audio guide';
-}
-
-function playAll(){
-  if(isPlayingAll){
-    window.speechSynthesis.cancel();
-    stopPlayAll();
-    resetButton(currentBtn);
-    clearActive();
-    return;
-  }
-  window.speechSynthesis.cancel();
-  playAllQueue = Array.from(document.querySelectorAll('.stop[data-audio], .shopbreak[data-audio]'));
-  playAllIndex = 0;
-  isPlayingAll = true;
-  document.getElementById('play-all-label').textContent = '■ stop the audio guide';
-  playNextInQueue();
 }
 
 function playNextInQueue(){
   if(!isPlayingAll || playAllIndex >= playAllQueue.length){
-    stopPlayAll();
-    clearActive();
+    stopCurrent();
     return;
   }
   const stopEl = playAllQueue[playAllIndex];
   const btn = stopEl.querySelector('.listen-btn');
-  stopEl.scrollIntoView({behavior:'smooth', block:'center'});
+  stopEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  
   speakStop(stopEl, btn, function(){
     playAllIndex++;
-    if(isPlayingAll) playNextInQueue();
+    playNextInQueue();
   });
+}
+
+function playAll(){
+  const label = document.getElementById('play-all-label');
+  if(isPlayingAll){
+    stopCurrent();
+  } else {
+    stopCurrent();
+    isPlayingAll = true;
+    if(label) label.textContent = '■ stop full audio guide';
+    playAllQueue = Array.from(document.querySelectorAll('.stop, .shopbreak'));
+    playAllIndex = 0;
+    playNextInQueue();
+  }
+}
+
+// ブラウザ起動時に音声リストをバックグラウンドで事前読み込みしておく処理
+if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = function() {
+    speechSynthesis.getVoices();
+  };
 }
 </script>
 
